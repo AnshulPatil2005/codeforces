@@ -1,5 +1,5 @@
 {
-  "name": "frontend",
+  "name": "codeforces-plus",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@headlessui/react": "^2.2.9",
+    "@monaco-editor/react": "^4.7.0",
     "@tanstack/react-query": "^5.90.21",
     "axios": "^1.13.5",
     "lucide-react": "^0.563.0",
@@ -19,7 +20,8 @@
     "react-router-dom": "^7.13.0",
     "recharts": "^3.7.0",
     "clsx": "^2.1.1",
-    "tailwind-merge": "^3.0.1"
+    "tailwind-merge": "^3.0.1",
+    "zustand": "^5.0.11"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
