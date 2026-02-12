@@ -1,4 +1,6 @@
 /** @type {import('tailwindcss').Config} */
+import colors from 'tailwindcss/colors'
+
 export default {
   content: [
     "./index.html",
@@ -7,13 +9,15 @@ export default {
   theme: {
     extend: {
       colors: {
-        'cf-gray': '#808080',
-        'cf-green': '#00a900',
-        'cf-cyan': '#03a89e',
-        'cf-blue': '#0000ff',
-        'cf-violet': '#a0a',
-        'cf-orange': '#ff8c00',
-        'cf-red': '#ff0000',
+        primary: colors.blue,
+        slate: colors.slate,
+        amber: colors.amber,
+        emerald: colors.emerald,
+        rose: colors.rose,
+      },
+      fontFamily: {
+        sans: ['Inter', 'system-ui', 'sans-serif'],
+        mono: ['JetBrains Mono', 'monospace'],
       },
     },
   },

@@ -1,86 +1,76 @@
-import type { RatingChange } from '../../types/rating';
+import { ExternalLink } from 'lucide-react'
 
 interface ContestHistoryProps {
-  contests: RatingChange[];
+  contests: Array<{
+    id: number
+    name: string
+    rank: number
+    rating_change: number
+    new_rating: number
+    date: string
+  }>
 }
 
 export default function ContestHistory({ contests }: ContestHistoryProps) {
-  const formatDate = (timestamp: number) => {
-    return new Date(timestamp * 1000).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
-  };
-
-  const getRatingChangeColor = (change: number) => {
-    if (change > 0) return 'text-green-600 bg-green-50';
-    if (change < 0) return 'text-red-600 bg-red-50';
-    return 'text-gray-600 bg-gray-50';
-  };
-
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-      <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Contest History</h3>
-
-      {contests.length === 0 ? (
-        <div className="text-center py-8 text-gray-500">
-          No contest history available
+    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+      <div className="p-8 border-b border-slate-100 flex items-center justify-between">
+        <div>
+          <h3 className="text-lg font-bold text-slate-900">Contest Participation</h3>
+          <p className="text-sm text-slate-500 font-medium">Recent competition performance</p>
         </div>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Date
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Contest
-                </th>
-                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Rank
-                </th>
-                <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Old Rating
-                </th>
-                <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  New Rating
-                </th>
-                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Change
-                </th>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="min-w-full divide-y divide-slate-200">
+          <thead className="bg-slate-50/50">
+            <tr>
+              <th className="px-8 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-widest">Contest</th>
+              <th className="px-8 py-4 text-center text-xs font-bold text-slate-500 uppercase tracking-widest">Rank</th>
+              <th className="px-8 py-4 text-center text-xs font-bold text-slate-500 uppercase tracking-widest">Change</th>
+              <th className="px-8 py-4 text-center text-xs font-bold text-slate-500 uppercase tracking-widest">Rating</th>
+              <th className="px-8 py-4 text-right text-xs font-bold text-slate-500 uppercase tracking-widest">Link</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100">
+            {contests.map((contest) => (
+              <tr key={contest.id} className="hover:bg-slate-50/50 transition-colors group">
+                <td className="px-8 py-5">
+                  <div className="max-w-md">
+                    <p className="text-sm font-bold text-slate-900 line-clamp-1 group-hover:text-blue-600 transition-colors">
+                      {contest.name}
+                    </p>
+                    <p className="text-[10px] font-bold text-slate-400 font-mono mt-0.5">{contest.date}</p>
+                  </div>
+                </td>
+                <td className="px-8 py-5 text-center">
+                  <span className="text-sm font-black text-slate-700 font-mono">#{contest.rank}</span>
+                </td>
+                <td className="px-8 py-5 text-center">
+                  <span className={`text-sm font-bold font-mono ${
+                    contest.rating_change > 0 ? 'text-emerald-600' :
+                    contest.rating_change < 0 ? 'text-rose-600' : 'text-slate-400'
+                  }`}>
+                    {contest.rating_change > 0 ? `+${contest.rating_change}` : contest.rating_change}
+                  </span>
+                </td>
+                <td className="px-8 py-5 text-center">
+                  <span className="text-sm font-black text-slate-900 font-mono">{contest.new_rating}</span>
+                </td>
+                <td className="px-8 py-5 text-right">
+                  <a
+                    href={`https://codeforces.com/contest/${contest.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                  </a>
+                </td>
               </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {contests.slice().reverse().map((contest, index) => (
-                <tr key={`${contest.contestId}-${index}`} className="hover:bg-gray-50">
-                  <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
-                    {formatDate(contest.ratingUpdateTimeSeconds)}
-                  </td>
-                  <td className="px-4 py-3 text-sm text-gray-900 max-w-xs truncate">
-                    {contest.contestName}
-                  </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 text-center">
-                    #{contest.rank}
-                  </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600 text-right">
-                    {contest.oldRating}
-                  </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900 text-right">
-                    {contest.newRating}
-                  </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-center">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getRatingChangeColor(contest.rating_change)}`}>
-                      {contest.rating_change > 0 ? `+${contest.rating_change}` : contest.rating_change}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
-  );
+  )
 }
