@@ -1,0 +1,31 @@
+# Python artifacts
+__pycache__/
+*.py[cod]
+*.pyd
+.python-version
+.pytest_cache/
+
+# Environments
+venv/
+.venv/
+env/
+
+# Node/Vite artifacts
+node_modules/
+dist/
+build/
+
+# Logs and env files
+*.log
+.env
+.env.*
+
+# Editor/OS
+.DS_Store
+.idea/
+.vscode/
+.claude/
+
+# Windows special device files that break git on Windows
+**/nul
+**/NUL
