@@ -1,23 +1,13 @@
 import { useState } from 'react'
-import { Search, Filter, Code2 } from 'lucide-react'
+import { Search, Filter, Code2, CheckCircle2, ArrowUpRight, X } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { problemApi } from '../services/api'
+import type { Problem } from '../types/problem'
 
 const TAGS = [
-  'math',
-  'implementation',
-  'greedy',
-  'dp',
-  'data structures',
-  'graphs',
-  'strings',
-  'sortings',
-  'binary search',
-  'trees',
-  'number theory',
-  'geometry',
-  'combinatorics',
-  'two pointers',
+  'math', 'implementation', 'greedy', 'dp', 'data structures',
+  'graphs', 'strings', 'sortings', 'binary search', 'trees',
+  'number theory', 'geometry', 'combinatorics', 'two pointers',
 ]
 
 export default function Problems() {
@@ -26,6 +16,7 @@ export default function Problems() {
   const [minRating, setMinRating] = useState<number | undefined>()
   const [maxRating, setMaxRating] = useState<number | undefined>()
   const [sortBy, setSortBy] = useState<'rating' | 'solved_count'>('rating')
+  const [isFilterVisible, setIsFilterVisible] = useState(true)
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ['problems', selectedTags, minRating, maxRating, searchQuery, sortBy],
@@ -45,180 +36,167 @@ export default function Problems() {
     )
   }
 
-  const clearFilters = () => {
-    setSelectedTags([])
-    setMinRating(undefined)
-    setMaxRating(undefined)
-    setSearchQuery('')
-  }
-
   const getRatingColor = (rating: number) => {
-    if (rating >= 2400) return 'text-red-600'
-    if (rating >= 2100) return 'text-orange-600'
+    if (rating >= 2400) return 'text-rose-600'
+    if (rating >= 2100) return 'text-orange-500'
     if (rating >= 1900) return 'text-purple-600'
     if (rating >= 1600) return 'text-blue-600'
     if (rating >= 1400) return 'text-cyan-600'
-    if (rating >= 1200) return 'text-green-600'
-    return 'text-gray-600'
+    if (rating >= 1200) return 'text-emerald-600'
+    return 'text-slate-500'
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <Code2 className="w-8 h-8 text-blue-600" />
-            <h2 className="text-2xl font-bold text-gray-900">Problem Set</h2>
+    <div className="space-y-8 animate-in fade-in duration-500">
+      {/* Header & Search Section */}
+      <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-8">
+          <div className="flex items-center gap-4">
+            <div className="bg-blue-100 p-3 rounded-2xl border border-blue-200">
+              <Code2 className="w-8 h-8 text-blue-600" />
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold text-slate-900">Problem Set</h2>
+              <p className="text-sm text-slate-500 font-medium">{data?.total || 0} challenges available</p>
+            </div>
           </div>
-          <div className="text-sm text-gray-600">
-            {data?.total || 0} problems
-          </div>
+          <button
+            onClick={() => setIsFilterVisible(!isFilterVisible)}
+            className="flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-xl font-bold text-sm hover:bg-slate-800 transition-all active:scale-95"
+          >
+            {isFilterVisible ? <X className="w-4 h-4" /> : <Filter className="w-4 h-4" />}
+            {isFilterVisible ? 'Hide Filters' : 'Show Filters'}
+          </button>
         </div>
 
-        {/* Search */}
-        <div className="relative mb-4">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+        <div className="relative group">
+          <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5 group-focus-within:text-blue-500 transition-colors" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search problems by name..."
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            placeholder="Search by name or ID..."
+            className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all font-medium"
           />
         </div>
 
-        {/* Filters */}
-        <div className="space-y-4">
-          {/* Rating Range */}
-          <div className="flex flex-wrap gap-4">
-            <div className="flex-1 min-w-[200px]">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Min Rating
-              </label>
+        {isFilterVisible && (
+          <div className="mt-8 pt-8 border-t border-slate-100 grid grid-cols-1 md:grid-cols-3 gap-6 animate-in slide-in-from-top-4 duration-300">
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Min Difficulty</label>
               <input
                 type="number"
                 value={minRating || ''}
                 onChange={(e) => setMinRating(e.target.value ? Number(e.target.value) : undefined)}
-                placeholder="800"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="e.g. 800"
+                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-blue-500 transition-all font-mono"
               />
             </div>
-            <div className="flex-1 min-w-[200px]">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Max Rating
-              </label>
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Max Difficulty</label>
               <input
                 type="number"
                 value={maxRating || ''}
                 onChange={(e) => setMaxRating(e.target.value ? Number(e.target.value) : undefined)}
-                placeholder="3500"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="e.g. 3500"
+                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-blue-500 transition-all font-mono"
               />
             </div>
-            <div className="flex-1 min-w-[200px]">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Sort By
-              </label>
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Sort Order</label>
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as 'rating' | 'solved_count')}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-blue-500 transition-all font-medium appearance-none cursor-pointer"
               >
                 <option value="rating">Difficulty (Rating)</option>
-                <option value="solved_count">Popularity (Solved Count)</option>
+                <option value="solved_count">Popularity (Solved)</option>
               </select>
             </div>
-          </div>
-
-          {/* Tags */}
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <label className="text-sm font-medium text-gray-700">Tags</label>
-              <button
-                onClick={clearFilters}
-                className="text-sm text-blue-600 hover:text-blue-800"
-              >
-                Clear all filters
-              </button>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {TAGS.map((tag) => (
-                <button
-                  key={tag}
-                  onClick={() => toggleTag(tag)}
-                  className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
-                    selectedTags.includes(tag)
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  {tag}
-                </button>
-              ))}
+            <div className="md:col-span-3 space-y-3">
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Topic Tags</label>
+              <div className="flex flex-wrap gap-2">
+                {TAGS.map((tag) => (
+                  <button
+                    key={tag}
+                    onClick={() => toggleTag(tag)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${
+                      selectedTags.includes(tag)
+                        ? 'bg-blue-600 border-blue-600 text-white shadow-md shadow-blue-500/20'
+                        : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
+                    }`}
+                  >
+                    {tag}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
 
-      {/* Loading State */}
+      {/* Loading & Error States */}
       {isLoading && (
-        <div className="flex justify-center items-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-        </div>
-      )}
-
-      {/* Error State */}
-      {isError && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <p className="text-red-800">Error loading problems</p>
+        <div className="flex flex-col justify-center items-center py-24 space-y-4">
+          <div className="w-12 h-12 border-4 border-slate-100 border-t-blue-600 rounded-full animate-spin"></div>
+          <p className="text-slate-500 font-medium animate-pulse text-sm uppercase tracking-widest">Searching challenges...</p>
         </div>
       )}
 
       {/* Problems Grid */}
       {!isLoading && !isError && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {data?.problems?.map((problem: any) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {data?.problems?.map((problem: Problem) => (
             <div
-              key={problem.id}
-              className="bg-white rounded-lg shadow-sm border border-gray-200 p-5 hover:shadow-md transition-shadow"
+              key={problem.index + problem.name}
+              className="group bg-white rounded-2xl shadow-sm border border-slate-200 p-6 hover:shadow-xl hover:shadow-slate-200/50 hover:-translate-y-1 transition-all duration-300"
             >
-              {/* Problem Header */}
-              <div className="flex items-start justify-between mb-3">
-                <div>
-                  <h3 className="font-semibold text-gray-900 mb-1">{problem.name}</h3>
-                  <span className="text-xs text-gray-500">Problem {problem.id}</span>
+              <div className="flex justify-between items-start mb-4">
+                <div className="space-y-1">
+                  <h3 className="font-bold text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-1">{problem.name}</h3>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">ID:</span>
+                    <span className="text-xs font-mono font-bold text-slate-500">{problem.index}</span>
+                  </div>
                 </div>
-                <span className={`text-lg font-bold ${getRatingColor(problem.rating)}`}>
-                  {problem.rating}
-                </span>
+                {problem.rating && (
+                  <div className="bg-slate-50 px-2 py-1 rounded-lg border border-slate-100">
+                    <span className={`text-sm font-black font-mono ${getRatingColor(problem.rating)}`}>
+                      {problem.rating}
+                    </span>
+                  </div>
+                )}
               </div>
 
-              {/* Tags */}
-              <div className="flex flex-wrap gap-1 mb-3">
-                {problem.tags.map((tag: string) => (
+              <div className="flex flex-wrap gap-1.5 mb-6 min-h-[48px]">
+                {problem.tags.slice(0, 3).map((tag: string) => (
                   <span
                     key={tag}
-                    className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded"
+                    className="px-2 py-1 bg-slate-100 text-slate-500 text-[10px] font-bold rounded-md uppercase tracking-tight"
                   >
                     {tag}
                   </span>
                 ))}
+                {problem.tags.length > 3 && (
+                  <span className="px-2 py-1 bg-slate-50 text-slate-400 text-[10px] font-bold rounded-md">
+                    +{problem.tags.length - 3}
+                  </span>
+                )}
               </div>
 
-              {/* Stats */}
-              <div className="flex items-center justify-between text-sm text-gray-600">
-                <div className="flex items-center gap-1">
-                  <span className="text-green-600">✓</span>
-                  <span>{problem.solved_count.toLocaleString()} solved</span>
+              <div className="flex items-center justify-between pt-4 border-t border-slate-50">
+                <div className="flex items-center gap-1.5 text-emerald-600">
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span className="text-xs font-bold font-mono">{(problem.solved_count || 0).toLocaleString()}</span>
                 </div>
                 <a
-                  href={`https://codeforces.com/problemset/problem/${problem.id}`}
+                  href={`https://codeforces.com/problemset/problem/${problem.contestId}/${problem.index}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-blue-600 hover:text-blue-800 font-medium"
+                  className="flex items-center gap-1.5 text-sm font-bold text-blue-600 hover:text-blue-800 transition-colors group/link"
                 >
-                  Solve →
+                  Solve Challenge
+                  <ArrowUpRight className="w-4 h-4 group-hover/link:translate-x-0.5 group-hover/link:-translate-y-0.5 transition-transform" />
                 </a>
               </div>
             </div>
@@ -227,15 +205,12 @@ export default function Problems() {
       )}
 
       {!isLoading && !isError && data?.problems?.length === 0 && (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
-          <Filter className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-          <p className="text-gray-600">No problems match your filters</p>
-          <button
-            onClick={clearFilters}
-            className="mt-4 text-blue-600 hover:text-blue-800 font-medium"
-          >
-            Clear filters
-          </button>
+        <div className="bg-white rounded-3xl border border-dashed border-slate-300 p-24 text-center">
+          <div className="bg-slate-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
+            <Search className="w-10 h-10 text-slate-300" />
+          </div>
+          <h3 className="text-xl font-bold text-slate-900 mb-2">No matching challenges</h3>
+          <p className="text-slate-500 font-medium">Try adjusting your filters or search query</p>
         </div>
       )}
     </div>

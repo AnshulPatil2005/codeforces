@@ -2,12 +2,12 @@
  * Get Tailwind color class for Codeforces rank
  */
 export const getRankColor = (rank?: string): string => {
-  if (!rank) return 'text-gray-600';
+  if (!rank) return 'text-slate-500';
 
   const lowerRank = rank.toLowerCase();
 
   if (lowerRank.includes('legendary') || lowerRank.includes('tourist')) {
-    return 'text-red-600';
+    return 'text-rose-600';
   }
   if (lowerRank.includes('international grandmaster')) {
     return 'text-orange-600';
@@ -19,7 +19,7 @@ export const getRankColor = (rank?: string): string => {
     return 'text-orange-400';
   }
   if (lowerRank.includes('master')) {
-    return 'text-orange-300';
+    return 'text-amber-500';
   }
   if (lowerRank.includes('candidate master')) {
     return 'text-purple-600';
@@ -31,25 +31,25 @@ export const getRankColor = (rank?: string): string => {
     return 'text-cyan-600';
   }
   if (lowerRank.includes('pupil')) {
-    return 'text-green-600';
+    return 'text-emerald-600';
   }
   if (lowerRank.includes('newbie')) {
-    return 'text-gray-600';
+    return 'text-slate-500';
   }
 
-  return 'text-gray-600';
+  return 'text-slate-500';
 };
 
 /**
  * Get Tailwind background color class for Codeforces rank
  */
 export const getRankBgColor = (rank?: string): string => {
-  if (!rank) return 'bg-gray-100';
+  if (!rank) return 'bg-slate-100';
 
   const lowerRank = rank.toLowerCase();
 
   if (lowerRank.includes('legendary') || lowerRank.includes('tourist')) {
-    return 'bg-red-100';
+    return 'bg-rose-100';
   }
   if (lowerRank.includes('international grandmaster')) {
     return 'bg-orange-100';
@@ -61,7 +61,7 @@ export const getRankBgColor = (rank?: string): string => {
     return 'bg-orange-50';
   }
   if (lowerRank.includes('master')) {
-    return 'bg-orange-50';
+    return 'bg-amber-50';
   }
   if (lowerRank.includes('candidate master')) {
     return 'bg-purple-100';
@@ -73,11 +73,11 @@ export const getRankBgColor = (rank?: string): string => {
     return 'bg-cyan-100';
   }
   if (lowerRank.includes('pupil')) {
-    return 'bg-green-100';
+    return 'bg-emerald-100';
   }
   if (lowerRank.includes('newbie')) {
-    return 'bg-gray-100';
+    return 'bg-slate-100';
   }
 
-  return 'bg-gray-100';
+  return 'bg-slate-100';
 };

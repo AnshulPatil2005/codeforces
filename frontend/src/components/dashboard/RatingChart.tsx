@@ -1,71 +1,75 @@
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
-import type { MonthlyGrowth } from '../../types/rating';
+import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts'
 
 interface RatingChartProps {
-  data: MonthlyGrowth[];
+  data: Array<{
+    month: string
+    rating: number
+  }>
 }
 
 export default function RatingChart({ data }: RatingChartProps) {
-  // Format data for Recharts
-  const chartData = data.map(item => ({
-    month: item.month,
-    change: item.change,
-    contests: item.contests,
-  }));
-
-  // Get last 12 months
-  const recentData = chartData.slice(-12);
-
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-      <h3 className="text-lg font-semibold text-gray-900 mb-4">Monthly Rating Growth</h3>
-
-      {recentData.length === 0 ? (
-        <div className="h-64 flex items-center justify-center text-gray-500">
-          No rating data available
+    <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 h-[400px]">
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h3 className="text-lg font-bold text-slate-900">Rating Progression</h3>
+          <p className="text-sm text-slate-500 font-medium">Monthly performance overview</p>
         </div>
-      ) : (
-        <ResponsiveContainer width="100%" height={300}>
-          <LineChart data={recentData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+        <div className="flex items-center gap-4 text-xs font-bold uppercase tracking-widest text-slate-400">
+          <div className="flex items-center gap-1.5">
+            <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+            Rating
+          </div>
+        </div>
+      </div>
+
+      <div className="h-[280px] w-full">
+        <ResponsiveContainer width="100%" height="100%">
+          <AreaChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+            <defs>
+              <linearGradient id="colorRating" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.1}/>
+                <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
             <XAxis
               dataKey="month"
-              tick={{ fontSize: 12 }}
-              stroke="#6b7280"
+              axisLine={false}
+              tickLine={false}
+              tick={{ fill: '#94a3b8', fontSize: 11, fontWeight: 600 }}
+              dy={10}
             />
             <YAxis
-              tick={{ fontSize: 12 }}
-              stroke="#6b7280"
-              label={{ value: 'Rating Change', angle: -90, position: 'insideLeft', style: { fontSize: 12, fill: '#6b7280' } }}
+              axisLine={false}
+              tickLine={false}
+              tick={{ fill: '#94a3b8', fontSize: 11, fontWeight: 600 }}
+              domain={['auto', 'auto']}
             />
             <Tooltip
               contentStyle={{
-                backgroundColor: 'white',
-                border: '1px solid #e5e7eb',
-                borderRadius: '0.5rem',
-                fontSize: '12px'
+                borderRadius: '12px',
+                border: '1px solid #e2e8f0',
+                boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
+                padding: '12px'
               }}
-              formatter={(value: number, name: string) => {
-                if (name === 'change') return [value > 0 ? `+${value}` : value, 'Change'];
-                return [value, 'Contests'];
-              }}
+              labelStyle={{ fontWeight: 800, color: '#1e293b', marginBottom: '4px' }}
+              itemStyle={{ fontWeight: 600, color: '#3b82f6', fontSize: '12px' }}
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              formatter={(value: any) => [value, 'Rating']}
             />
-            <ReferenceLine y={0} stroke="#9ca3af" strokeDasharray="3 3" />
-            <Line
+            <Area
               type="monotone"
-              dataKey="change"
+              dataKey="rating"
               stroke="#3b82f6"
-              strokeWidth={2}
-              dot={{ fill: '#3b82f6', r: 4 }}
-              activeDot={{ r: 6 }}
+              strokeWidth={3}
+              fillOpacity={1}
+              fill="url(#colorRating)"
+              animationDuration={1500}
             />
-          </LineChart>
+          </AreaChart>
         </ResponsiveContainer>
-      )}
-
-      <p className="mt-4 text-xs text-gray-500 text-center">
-        Showing last 12 months of rating changes
-      </p>
+      </div>
     </div>
-  );
+  )
 }
