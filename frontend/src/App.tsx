@@ -1,9 +1,8 @@
 import { BrowserRouter, Routes, Route, Link, useLocation, Navigate } from 'react-router-dom'
-import { LayoutDashboard, Trophy, Code2, Menu, X, Github, LogOut, User, Terminal } from 'lucide-react'
+import { LayoutDashboard, Trophy, Code2, Menu, X, Github, LogOut, User, Terminal, Code } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { useAuthStore } from './store/authStore'
-
 import Landing from './pages/Landing'
 import Dashboard from './pages/Dashboard'
 import Leaderboard from './pages/Leaderboard'
@@ -25,14 +24,36 @@ function NavLink({ to, children, icon: Icon }: NavLinkProps) {
   return (
     <Link
       to={to}
-      className={`inline-flex items-center gap-2 px-3 py-2 text-sm font-semibold rounded-lg transition-all ${
+      className={`flex items-center gap-2 px-4 py-2 text-sm font-bold transition-all rounded-xl ${
         isActive
-          ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg'
-          : 'text-gray-300 hover:text-white hover:bg-white/10'
+          ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20'
+          : 'text-gray-400 hover:text-white hover:bg-white/10'
       }`}
     >
-      <Icon className="w-4 h-4" />
+      <Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-gray-500'}`} />
       {children}
+    </Link>
+  )
+}
+
+interface MobileNavLinkProps extends NavLinkProps {
+  onClick: () => void
+}
+
+function MobileNavLink({ to, children, icon: Icon, onClick }: MobileNavLinkProps) {
+  const location = useLocation()
+  const isActive = location.pathname === to
+
+  return (
+    <Link
+      to={to}
+      onClick={onClick}
+      className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
+        isActive ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-white/5'
+      }`}
+    >
+      <Icon className="w-5 h-5" />
+      <span className="font-bold">{children}</span>
     </Link>
   )
 }
@@ -40,9 +61,11 @@ function NavLink({ to, children, icon: Icon }: NavLinkProps) {
 function AppContent() {
   const { isAuthenticated, user, logout } = useAuthStore()
   const location = useLocation()
-
   const [isScrolled, setIsScrolled] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+
+  // Hide navigation on landing, login, and signup pages for non-authenticated users
+  const hideNav = !isAuthenticated && ['/', '/login', '/signup'].includes(location.pathname)
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 10)
@@ -50,32 +73,27 @@ function AppContent() {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
-  const hideNav = !isAuthenticated && ['/', '/login', '/signup'].includes(location.pathname)
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-gray-100">
+      {/* Navigation Header */}
       {!hideNav && (
-        <nav
-          className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-            isScrolled
-              ? 'bg-gray-900/80 backdrop-blur-lg border-b border-white/10 shadow-lg py-2'
-              : 'bg-transparent py-4'
-          }`}
-        >
+        <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+          isScrolled || isMobileMenuOpen ? 'bg-gray-900/80 backdrop-blur-lg border-b border-white/10 py-2' : 'bg-transparent py-4'
+        }`}>
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center h-12">
               <div className="flex items-center gap-8">
-                <Link to={isAuthenticated ? "/dashboard" : "/"} className="flex items-center gap-2">
-                  <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-2 rounded-lg">
-                    <Code2 className="w-5 h-5 text-white" />
+                <Link to={isAuthenticated ? "/dashboard" : "/"} className="flex items-center gap-2 group">
+                  <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-1.5 rounded-lg shadow-lg shadow-blue-500/30 group-hover:scale-110 transition-transform">
+                    <Code className="w-5 h-5 text-white" />
                   </div>
-                  <h1 className="text-xl font-black text-white">
-                    Codeforces<span className="text-blue-400">+</span>
+                  <h1 className="text-xl font-black tracking-tighter text-white uppercase">
+                    Codeforces<span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">+</span>
                   </h1>
                 </Link>
 
                 {isAuthenticated && (
-                  <div className="hidden md:flex items-center gap-2">
+                  <div className="hidden md:flex items-center bg-white/5 p-1 rounded-2xl border border-white/10">
                     <NavLink to="/dashboard" icon={LayoutDashboard}>Dashboard</NavLink>
                     <NavLink to="/leaderboard" icon={Trophy}>Leaderboard</NavLink>
                     <NavLink to="/problems" icon={Code2}>Problems</NavLink>
@@ -84,68 +102,94 @@ function AppContent() {
                 )}
               </div>
 
-              <div className="flex items-center gap-4">
+              <div className="hidden md:flex items-center gap-4">
                 {isAuthenticated ? (
-                  <>
-                    <div className="flex items-center gap-2 px-3 py-2 bg-white/10 rounded-lg border border-white/20">
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2 px-4 py-2 bg-white/5 backdrop-blur-sm rounded-xl border border-white/10">
                       <User className="w-4 h-4 text-blue-400" />
-                      <span className="text-white font-semibold">{user?.username}</span>
+                      <span className="font-bold text-sm text-white">{user?.username}</span>
                     </div>
-
                     <button
                       onClick={logout}
-                      className="inline-flex items-center gap-2 px-4 py-2 bg-red-600/20 border border-red-500/50 rounded-lg text-sm font-semibold text-red-400 hover:bg-red-600/30 transition-all"
+                      className="p-2 text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 rounded-xl transition-all"
+                      title="Logout"
                     >
-                      <LogOut className="w-4 h-4" />
+                      <LogOut className="w-5 h-5" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-4">
+                    <Link
+                      to="/login"
+                      className="text-sm font-bold text-gray-400 hover:text-white transition-colors"
+                    >
+                      Login
+                    </Link>
+                    <Link
+                      to="/signup"
+                      className="px-5 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white text-sm font-black rounded-xl hover:shadow-lg hover:shadow-blue-500/20 transition-all active:scale-95"
+                    >
+                      Sign up
+                    </Link>
+                  </div>
+                )}
+                <a
+                  href="https://github.com"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="p-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-all"
+                >
+                  <Github className="w-5 h-5" />
+                </a>
+              </div>
+
+              {/* Mobile Menu Button */}
+              <div className="md:hidden">
+                <button
+                  onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                  className="p-2 text-gray-300 bg-white/5 border border-white/10 rounded-xl"
+                >
+                  {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Mobile Navigation */}
+          {isMobileMenuOpen && (
+            <div className="md:hidden absolute top-full left-0 right-0 mt-2 mx-4 p-4 bg-gray-900 border border-white/10 rounded-2xl shadow-2xl animate-in slide-in-from-top-4">
+              <div className="flex flex-col gap-2">
+                {isAuthenticated ? (
+                  <>
+                    <div className="flex items-center gap-3 px-4 py-3 mb-2 bg-white/5 rounded-xl border border-white/10">
+                      <User className="w-5 h-5 text-blue-400" />
+                      <span className="font-bold text-white">{user?.username}</span>
+                    </div>
+                    <MobileNavLink to="/dashboard" icon={LayoutDashboard} onClick={() => setIsMobileMenuOpen(false)}>Dashboard</MobileNavLink>
+                    <MobileNavLink to="/leaderboard" icon={Trophy} onClick={() => setIsMobileMenuOpen(false)}>Leaderboard</MobileNavLink>
+                    <MobileNavLink to="/problems" icon={Code2} onClick={() => setIsMobileMenuOpen(false)}>Problems</MobileNavLink>
+                    <MobileNavLink to="/ide" icon={Terminal} onClick={() => setIsMobileMenuOpen(false)}>IDE</MobileNavLink>
+                    <button
+                      onClick={() => { logout(); setIsMobileMenuOpen(false); }}
+                      className="flex items-center gap-3 px-4 py-3 text-rose-400 hover:bg-rose-500/10 rounded-xl transition-all font-bold"
+                    >
+                      <LogOut className="w-5 h-5" />
                       Logout
                     </button>
                   </>
                 ) : (
                   <>
-                    <Link to="/login" className="text-gray-300 hover:text-white text-sm font-semibold">
-                      Login
-                    </Link>
-                    <Link
-                      to="/signup"
-                      className="px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white text-sm font-bold rounded-lg hover:from-blue-700 hover:to-purple-700"
-                    >
-                      Sign up
-                    </Link>
+                    <MobileNavLink to="/login" icon={User} onClick={() => setIsMobileMenuOpen(false)}>Login</MobileNavLink>
+                    <MobileNavLink to="/signup" icon={Code} onClick={() => setIsMobileMenuOpen(false)}>Sign up</MobileNavLink>
                   </>
                 )}
-
-                <a
-                  href="https://github.com"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="hidden md:block p-2 text-gray-400 hover:text-white transition"
-                >
-                  <Github className="w-5 h-5" />
-                </a>
-
-                <div className="md:hidden">
-                  <button
-                    onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                    className="p-2 text-white bg-white/10 rounded-lg"
-                  >
-                    {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-                  </button>
-                </div>
               </div>
             </div>
-
-            {isMobileMenuOpen && isAuthenticated && (
-              <div className="md:hidden mt-4 flex flex-col gap-2 bg-gray-800 p-4 rounded-xl">
-                <NavLink to="/dashboard" icon={LayoutDashboard}>Dashboard</NavLink>
-                <NavLink to="/leaderboard" icon={Trophy}>Leaderboard</NavLink>
-                <NavLink to="/problems" icon={Code2}>Problems</NavLink>
-                <NavLink to="/ide" icon={Terminal}>IDE</NavLink>
-              </div>
-            )}
-          </div>
+          )}
         </nav>
       )}
 
+      {/* Main Content */}
       <main className={hideNav ? "" : "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-12"}>
         <Routes>
           <Route path="/" element={isAuthenticated ? <Navigate to="/dashboard" /> : <Landing />} />

@@ -45,8 +45,13 @@ export default function IDE() {
       } else {
         setOutput(`Error:\n${result.error || 'Unknown error occurred'}`)
       }
-    } catch (error: any) {
-      const errorMsg = error.response?.data?.detail || error.message || 'Failed to execute code'
+    } catch (error: unknown) {
+      let errorMsg = 'Failed to execute code'
+      if (axios.isAxiosError(error)) {
+        errorMsg = error.response?.data?.detail || error.message || errorMsg
+      } else if (error instanceof Error) {
+        errorMsg = error.message
+      }
       setOutput(`Execution failed:\n${errorMsg}`)
     } finally {
       setIsRunning(false)
@@ -134,7 +139,7 @@ export default function IDE() {
             height="100%"
             language={language.id}
             value={code}
-            onChange={(value) => setCode(value || '')}
+            onChange={(value: string | undefined) => setCode(value || '')}
             theme="vs-dark"
             options={{
               minimap: { enabled: false },

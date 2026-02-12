@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { TrendingUp, Award, Hash, Activity, User, ChevronRight, Search } from 'lucide-react'
 import { useDashboard } from '../hooks/useDashboard'
@@ -9,28 +9,24 @@ import PerformanceInsights from '../components/dashboard/PerformanceInsights'
 
 export default function Dashboard() {
   const [searchParams, setSearchParams] = useSearchParams()
+  const activeHandle = searchParams.get('handle') || 'tourist'
 
-  const handleParam = searchParams.get('handle') || 'tourist'
+  const [inputHandle, setInputHandle] = useState(activeHandle)
 
-  const [inputHandle, setInputHandle] = useState(handleParam)
-  const [activeHandle, setActiveHandle] = useState(handleParam)
-
-  // Sync URL → component state
-  useEffect(() => {
-    const handle = searchParams.get('handle')
-    if (handle) {
-      setInputHandle(handle)
-      setActiveHandle(handle)
-    }
-  }, [searchParams])
+  // Sync input handle with search params when they change (e.g. via navigation)
+  // We can use a controlled input that's initialized from the param.
+  // If we want to update the input when the URL changes externally:
+  const [prevActiveHandle, setPrevActiveHandle] = useState(activeHandle)
+  if (activeHandle !== prevActiveHandle) {
+    setInputHandle(activeHandle)
+    setPrevActiveHandle(activeHandle)
+  }
 
   const { data, isLoading, isError, error } = useDashboard(activeHandle)
 
   const handleLoad = () => {
     if (inputHandle.trim()) {
-      const trimmed = inputHandle.trim()
-      setSearchParams({ handle: trimmed })
-      setActiveHandle(trimmed)
+      setSearchParams({ handle: inputHandle.trim() })
     }
   }
 
@@ -40,59 +36,52 @@ export default function Dashboard() {
     }
   }
 
-  const chartData =
-    data?.monthly_growth.map((item, index, array) => {
-      const baseRating =
-        data.stats.current_rating -
-        array.slice(index).reduce((sum, current) => sum + current.change, 0) +
-        item.change
+  // Data mapping for components
+  const chartData = data?.monthly_growth.map((item, index, array) => {
+    // Simple approximation of progression since we don't have the full history start rating here
+    // In a real app, the backend should provide the absolute rating points for the chart.
+    const baseRating = data.stats.current_rating - array.slice(index).reduce((sum, current) => sum + current.change, 0) + item.change;
+    return {
+      month: item.month,
+      rating: baseRating
+    }
+  }) || []
 
-      return {
-        month: item.month,
-        rating: baseRating
-      }
-    }) || []
-
-  const mappedContests =
-    data?.contest_history.map(c => ({
-      id: c.contestId,
-      name: c.contestName,
-      rank: c.rank,
-      rating_change: c.rating_change,
-      new_rating: c.newRating,
-      date: new Date(c.ratingUpdateTimeSeconds * 1000).toLocaleDateString()
-    })) || []
+  const mappedContests = data?.contest_history.map(c => ({
+    id: c.contestId,
+    name: c.contestName,
+    rank: c.rank,
+    rating_change: c.rating_change,
+    new_rating: c.newRating,
+    date: new Date(c.ratingUpdateTimeSeconds * 1000).toLocaleDateString()
+  })) || []
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
-      {/* Search Section */}
-      <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200">
+      {/* Search Bar Section */}
+      <div className="bg-white/10 backdrop-blur-md p-8 rounded-2xl shadow-sm border border-white/10">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-1">
-            <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
+            <h2 className="text-2xl font-bold text-white flex items-center gap-2">
               <div className="p-1.5 bg-blue-600 rounded-lg">
                 <Activity className="w-5 h-5 text-white" />
               </div>
               Contest Dashboard
             </h2>
-            <p className="text-slate-500 text-sm font-medium">
-              Visualize competitive programming performance
-            </p>
+            <p className="text-gray-400 text-sm font-medium">Visualize competitive programming performance</p>
           </div>
-
           <div className="flex flex-1 max-w-md gap-3">
             <div className="flex-1 relative group">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5 group-focus-within:text-blue-500 transition-colors" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 group-focus-within:text-blue-500 transition-colors" />
               <input
                 type="text"
                 value={inputHandle}
                 onChange={(e) => setInputHandle(e.target.value)}
-                onKeyDown={handleKeyPress}
+                onKeyPress={handleKeyPress}
                 placeholder="Search Codeforces handle..."
-                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all font-medium"
+                className="w-full pl-10 pr-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all font-medium"
               />
             </div>
-
             <button
               onClick={handleLoad}
               disabled={isLoading}
@@ -105,39 +94,36 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Error */}
+      {/* Error State */}
       {isError && (
-        <div className="bg-rose-50 border border-rose-200 rounded-2xl p-6 flex items-center gap-4 text-rose-800">
-          <div className="p-2 bg-rose-100 rounded-full text-rose-600">
+        <div className="bg-rose-500/10 border border-rose-500/20 rounded-2xl p-6 flex items-center gap-4 text-rose-400">
+          <div className="p-2 bg-rose-500/20 rounded-full text-rose-400">
             <Activity className="w-6 h-6" />
           </div>
           <div>
             <p className="font-bold">Error loading dashboard</p>
-            <p className="text-sm opacity-80">
-              {error instanceof Error ? error.message : 'Unknown error occurred'}
-            </p>
+            <p className="text-sm opacity-80">{error instanceof Error ? error.message : 'Unknown error occurred'}</p>
           </div>
         </div>
       )}
 
-      {/* Loading */}
+      {/* Loading State */}
       {isLoading && (
         <div className="flex flex-col justify-center items-center py-24 space-y-4">
           <div className="relative">
-            <div className="w-16 h-16 border-4 border-slate-100 border-t-blue-600 rounded-full animate-spin"></div>
+            <div className="w-16 h-16 border-4 border-white/10 border-t-blue-600 rounded-full animate-spin"></div>
             <div className="absolute inset-0 flex items-center justify-center">
               <User className="w-6 h-6 text-blue-600" />
             </div>
           </div>
-          <p className="text-slate-500 font-medium animate-pulse text-sm uppercase tracking-widest">
-            Fetching stats...
-          </p>
+          <p className="text-gray-400 font-medium animate-pulse text-sm uppercase tracking-widest">Fetching stats...</p>
         </div>
       )}
 
-      {/* Content */}
+      {/* Dashboard Content */}
       {data && !isLoading && (
         <div className="space-y-8 animate-in slide-in-from-bottom-4 duration-700">
+          {/* Stats Cards Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             <StatsCard
               title="Current Rating"
@@ -154,13 +140,7 @@ export default function Dashboard() {
             <StatsCard
               title="Last Change"
               value={data.stats.last_change > 0 ? `+${data.stats.last_change}` : data.stats.last_change}
-              trend={
-                data.stats.last_change > 0
-                  ? 'up'
-                  : data.stats.last_change < 0
-                  ? 'down'
-                  : 'neutral'
-              }
+              trend={data.stats.last_change > 0 ? 'up' : data.stats.last_change < 0 ? 'down' : 'neutral'}
               subtitle={data.stats.last_change !== 0 ? 'Latest contest' : undefined}
               icon={<Activity className="w-6 h-6 text-emerald-600" />}
             />
@@ -172,6 +152,7 @@ export default function Dashboard() {
             />
           </div>
 
+          {/* Charts and Tables Section */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2">
               <RatingChart data={chartData} />
@@ -181,6 +162,7 @@ export default function Dashboard() {
             </div>
           </div>
 
+          {/* Detailed History */}
           <ContestHistory contests={mappedContests} />
         </div>
       )}

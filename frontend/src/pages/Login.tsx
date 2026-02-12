@@ -33,8 +33,12 @@ export default function Login() {
 
       // Redirect to dashboard
       navigate('/')
-    } catch (err: any) {
-      setError(err.response?.data?.detail || 'Login failed. Please try again.')
+    } catch (err: unknown) {
+      if (axios.isAxiosError(err)) {
+        setError(err.response?.data?.detail || 'Login failed. Please try again.')
+      } else {
+        setError('An unexpected error occurred.')
+      }
     } finally {
       setIsLoading(false)
     }
