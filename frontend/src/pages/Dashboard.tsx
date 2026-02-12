@@ -9,7 +9,7 @@ import PerformanceInsights from '../components/dashboard/PerformanceInsights'
 
 export default function Dashboard() {
   const [searchParams] = useSearchParams()
-  const handleParam = searchParams.get('handle') || 'alice_codes'
+  const handleParam = searchParams.get('handle') || 'tourist'
 
   const [inputHandle, setInputHandle] = useState(handleParam)
   const [activeHandle, setActiveHandle] = useState(handleParam)

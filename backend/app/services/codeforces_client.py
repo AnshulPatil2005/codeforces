@@ -1,130 +1,90 @@
 import httpx
-from typing import List, Optional, Dict, Any
-from app.utils.rate_limiter import RateLimiter
-from app.utils.cache import SimpleCache
-from app.models.user import User
-from app.models.rating import RatingChange, Contest
-from app.models.problem import Problem, ProblemStatistics
+from typing import Optional, Dict, Any, List
+import logging
 
+logger = logging.getLogger(__name__)
 
 class CodeforcesClient:
-    """Client for interacting with Codeforces API"""
+    """Client for Codeforces API"""
 
     BASE_URL = "https://codeforces.com/api"
 
     def __init__(self):
         self.client = httpx.AsyncClient(timeout=30.0)
-        self.rate_limiter = RateLimiter(max_calls=5, period=1.0)  # 5 calls per second
-        self.cache = SimpleCache(maxsize=1000, ttl=300)  # 5-minute cache
 
-    async def _make_request(self, endpoint: str, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-        """
-        Make a rate-limited and cached request to Codeforces API.
+    async def get_user_info(self, handle: str) -> Optional[Dict[str, Any]]:
+        """Get user info from Codeforces API"""
+        try:
+            url = f"{self.BASE_URL}/user.info?handles={handle}"
+            response = await self.client.get(url)
+            response.raise_for_status()
 
-        Args:
-            endpoint: API endpoint (e.g., 'user.info')
-            params: Query parameters
+            data = response.json()
+            if data.get("status") != "OK":
+                logger.error(f"CF API error: {data.get('comment')}")
+                return None
 
-        Returns:
-            API response data
+            if not data.get("result") or len(data["result"]) == 0:
+                return None
 
-        Raises:
-            httpx.HTTPError: If the request fails
-            ValueError: If the API returns an error status
-        """
-        # Create cache key from endpoint and params
-        cache_key = f"{endpoint}:{str(params)}"
+            user = data["result"][0]
 
-        # Check cache first
-        if self.cache.has(cache_key):
-            return self.cache.get(cache_key)
+            # Transform to our format
+            return {
+                "handle": user.get("handle", handle),
+                "rating": user.get("rating", 0),
+                "maxRating": user.get("maxRating", 0),
+                "rank": user.get("rank", "unrated"),
+                "maxRank": user.get("maxRank", "unrated"),
+                "avatar": user.get("titlePhoto", f"https://ui-avatars.com/api/?name={handle}&background=random&color=fff"),
+                "contribution": user.get("contribution", 0),
+                "friendOfCount": user.get("friendOfCount", 0),
+            }
+        except Exception as e:
+            logger.error(f"Error fetching user {handle}: {e}")
+            return None
 
-        # Apply rate limiting
-        await self.rate_limiter.acquire()
+    async def get_user_rating_history(self, handle: str) -> List[Dict[str, Any]]:
+        """Get user rating history from Codeforces API"""
+        try:
+            url = f"{self.BASE_URL}/user.rating?handle={handle}"
+            response = await self.client.get(url)
+            response.raise_for_status()
 
-        # Make request
-        url = f"{self.BASE_URL}/{endpoint}"
-        response = await self.client.get(url, params=params or {})
-        response.raise_for_status()
+            data = response.json()
+            if data.get("status") != "OK":
+                return []
 
-        data = response.json()
+            changes = data.get("result", [])
 
-        # Check if Codeforces API returned an error
-        if data.get("status") != "OK":
-            raise ValueError(f"Codeforces API error: {data.get('comment', 'Unknown error')}")
-
-        result = data.get("result", {})
-
-        # Cache the result
-        self.cache.set(cache_key, result)
-
-        return result
-
-    async def get_user_info(self, handle: str) -> User:
-        """
-        Get user information.
-
-        Args:
-            handle: Codeforces handle
-
-        Returns:
-            User object
-        """
-        result = await self._make_request("user.info", {"handles": handle})
-
-        if not result or len(result) == 0:
-            raise ValueError(f"User '{handle}' not found")
-
-        user_data = result[0]
-        return User(**user_data)
-
-    async def get_user_rating_history(self, handle: str) -> List[RatingChange]:
-        """
-        Get user rating history.
-
-        Args:
-            handle: Codeforces handle
-
-        Returns:
-            List of RatingChange objects
-        """
-        result = await self._make_request("user.rating", {"handle": handle})
-        return [RatingChange(**item) for item in result]
-
-    async def get_contest_list(self, gym: bool = False) -> List[Contest]:
-        """
-        Get list of contests.
-
-        Args:
-            gym: Include gym contests
-
-        Returns:
-            List of Contest objects
-        """
-        result = await self._make_request("contest.list", {"gym": str(gym).lower()})
-        return [Contest(**item) for item in result]
-
-    async def get_problemset_problems(self, tags: Optional[List[str]] = None) -> Dict[str, List]:
-        """
-        Get problemset problems.
-
-        Args:
-            tags: Filter by tags
-
-        Returns:
-            Dictionary with 'problems' and 'problemStatistics' lists
-        """
-        params = {}
-        if tags:
-            params["tags"] = ";".join(tags)
-
-        result = await self._make_request("problemset.problems", params)
-
-        problems = [Problem(**item) for item in result.get("problems", [])]
-        statistics = [ProblemStatistics(**item) for item in result.get("problemStatistics", [])]
-
-        return {"problems": problems, "statistics": statistics}
+            # Transform to our format
+            return [
+                {
+                    "contestId": change.get("contestId"),
+                    "contestName": change.get("contestName"),
+                    "handle": handle,
+                    "rank": change.get("rank"),
+                    "ratingUpdateTimeSeconds": change.get("ratingUpdateTimeSeconds"),
+                    "oldRating": change.get("oldRating"),
+                    "newRating": change.get("newRating"),
+                    "rating_change": change.get("newRating", 0) - change.get("oldRating", 0)
+                }
+                for change in changes
+            ]
+        except Exception as e:
+            logger.error(f"Error fetching rating history for {handle}: {e}")
+            return []
 
     async def close(self):
         """Close the HTTP client"""
         await self.client.aclose()
+
+# Singleton instance
+_cf_client: Optional[CodeforcesClient] = None
+
+def get_cf_client() -> CodeforcesClient:
+    """Get or create Codeforces client singleton"""
+    global _cf_client
+    if _cf_client is None:
+        _cf_client = CodeforcesClient()
+    return _cf_client
