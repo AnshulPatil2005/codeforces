@@ -1,20 +1,34 @@
 import httpx
 from typing import Optional, Dict, Any, List
 import logging
+from app.utils.rate_limiter import RateLimiter
+from app.utils.cache import SimpleCache
+from app.config import settings
 
 logger = logging.getLogger(__name__)
 
 class CodeforcesClient:
-    """Client for Codeforces API"""
+    """Client for Codeforces API with Rate Limiting and Caching"""
 
-    BASE_URL = "https://codeforces.com/api"
+    BASE_URL = settings.codeforces_api_base_url
 
     def __init__(self):
         self.client = httpx.AsyncClient(timeout=30.0)
+        self.rate_limiter = RateLimiter(
+            max_calls=settings.rate_limit_calls,
+            period=settings.rate_limit_period
+        )
+        self.cache = SimpleCache(ttl=settings.cache_ttl_seconds)
 
     async def get_user_info(self, handle: str) -> Optional[Dict[str, Any]]:
         """Get user info from Codeforces API"""
+        cache_key = f"user_info_{handle}"
+        cached = self.cache.get(cache_key)
+        if cached:
+            return cached
+
         try:
+            await self.rate_limiter.acquire()
             url = f"{self.BASE_URL}/user.info?handles={handle}"
             response = await self.client.get(url)
             response.raise_for_status()
@@ -30,7 +44,7 @@ class CodeforcesClient:
             user = data["result"][0]
 
             # Transform to our format
-            return {
+            result = {
                 "handle": user.get("handle", handle),
                 "rating": user.get("rating", 0),
                 "maxRating": user.get("maxRating", 0),
@@ -40,13 +54,21 @@ class CodeforcesClient:
                 "contribution": user.get("contribution", 0),
                 "friendOfCount": user.get("friendOfCount", 0),
             }
+            self.cache.set(cache_key, result)
+            return result
         except Exception as e:
             logger.error(f"Error fetching user {handle}: {e}")
             return None
 
     async def get_user_rating_history(self, handle: str) -> List[Dict[str, Any]]:
         """Get user rating history from Codeforces API"""
+        cache_key = f"rating_history_{handle}"
+        cached = self.cache.get(cache_key)
+        if cached:
+            return cached
+
         try:
+            await self.rate_limiter.acquire()
             url = f"{self.BASE_URL}/user.rating?handle={handle}"
             response = await self.client.get(url)
             response.raise_for_status()
@@ -58,7 +80,7 @@ class CodeforcesClient:
             changes = data.get("result", [])
 
             # Transform to our format
-            return [
+            result = [
                 {
                     "contestId": change.get("contestId"),
                     "contestName": change.get("contestName"),
@@ -71,6 +93,8 @@ class CodeforcesClient:
                 }
                 for change in changes
             ]
+            self.cache.set(cache_key, result)
+            return result
         except Exception as e:
             logger.error(f"Error fetching rating history for {handle}: {e}")
             return []

@@ -3,18 +3,35 @@ from typing import Optional, Dict, Any
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from fastapi import HTTPException, status
-import secrets
+import json
+import os
+from app.config import settings
 
 # JWT Configuration
-SECRET_KEY = secrets.token_urlsafe(32)  # Generate random secret key
+SECRET_KEY = settings.secret_key
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7  # 7 days
 
-# Password hashing
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# Password hashing - using sha256_crypt for better compatibility in this environment
+pwd_context = CryptContext(schemes=["sha256_crypt"], deprecated="auto")
 
-# In-memory user database (replace with real DB later)
-users_db: Dict[str, Dict[str, Any]] = {}
+# Simple persistence for user database
+DB_FILE = "users_db.json"
+
+def load_db() -> Dict[str, Dict[str, Any]]:
+    if os.path.exists(DB_FILE):
+        try:
+            with open(DB_FILE, "r") as f:
+                return json.load(f)
+        except Exception:
+            return {}
+    return {}
+
+def save_db(db: Dict[str, Dict[str, Any]]):
+    with open(DB_FILE, "w") as f:
+        json.dump(db, f, indent=2)
+
+users_db: Dict[str, Dict[str, Any]] = load_db()
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
@@ -76,6 +93,7 @@ def register_user(username: str, email: str, password: str, cf_handle: Optional[
     }
 
     users_db[username] = user
+    save_db(users_db)
 
     # Return user without password
     return {

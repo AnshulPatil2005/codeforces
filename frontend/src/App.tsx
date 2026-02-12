@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, Link, useLocation, Navigate } from 'react-router-dom'
-import { LayoutDashboard, Trophy, Code2, Menu, X, Github, LogOut, User, Terminal, Code } from 'lucide-react'
+import { LayoutDashboard, Trophy, Code2, Menu, X, Github, LogOut, User, Terminal, Code, Users } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { useAuthStore } from './store/authStore'
@@ -7,6 +7,7 @@ import Landing from './pages/Landing'
 import Dashboard from './pages/Dashboard'
 import Leaderboard from './pages/Leaderboard'
 import Problems from './pages/Problems'
+import Compare from './pages/Compare'
 import Login from './pages/Login'
 import Signup from './pages/Signup'
 import IDE from './pages/IDE'
@@ -97,6 +98,7 @@ function AppContent() {
                     <NavLink to="/dashboard" icon={LayoutDashboard}>Dashboard</NavLink>
                     <NavLink to="/leaderboard" icon={Trophy}>Leaderboard</NavLink>
                     <NavLink to="/problems" icon={Code2}>Problems</NavLink>
+                    <NavLink to="/compare" icon={Users}>Compare</NavLink>
                     <NavLink to="/ide" icon={Terminal}>IDE</NavLink>
                   </div>
                 )}
@@ -168,6 +170,7 @@ function AppContent() {
                     <MobileNavLink to="/dashboard" icon={LayoutDashboard} onClick={() => setIsMobileMenuOpen(false)}>Dashboard</MobileNavLink>
                     <MobileNavLink to="/leaderboard" icon={Trophy} onClick={() => setIsMobileMenuOpen(false)}>Leaderboard</MobileNavLink>
                     <MobileNavLink to="/problems" icon={Code2} onClick={() => setIsMobileMenuOpen(false)}>Problems</MobileNavLink>
+                    <MobileNavLink to="/compare" icon={Users} onClick={() => setIsMobileMenuOpen(false)}>Compare</MobileNavLink>
                     <MobileNavLink to="/ide" icon={Terminal} onClick={() => setIsMobileMenuOpen(false)}>IDE</MobileNavLink>
                     <button
                       onClick={() => { logout(); setIsMobileMenuOpen(false); }}
@@ -196,6 +199,7 @@ function AppContent() {
           <Route path="/dashboard" element={isAuthenticated ? <Dashboard /> : <Navigate to="/login" />} />
           <Route path="/leaderboard" element={<Leaderboard />} />
           <Route path="/problems" element={<Problems />} />
+          <Route path="/compare" element={<Compare />} />
           <Route path="/ide" element={<IDE />} />
           <Route path="/login" element={!isAuthenticated ? <Login /> : <Navigate to="/dashboard" />} />
           <Route path="/signup" element={!isAuthenticated ? <Signup /> : <Navigate to="/dashboard" />} />

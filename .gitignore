@@ -19,6 +19,7 @@ build/
 *.log
 .env
 .env.*
+users_db.json
 
 # Editor/OS
 .DS_Store

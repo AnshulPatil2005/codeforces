@@ -6,14 +6,20 @@ from typing import Dict, Any, Optional
 from pathlib import Path
 
 class CodeExecutor:
-    """Execute code in multiple languages"""
+    """
+    Execute code in multiple languages.
 
-    # Timeout in seconds
-    TIMEOUT = 10
+    WARNING: This executor runs user-provided code directly on the host system.
+    This is a MAJOR SECURITY VULNERABILITY and should NEVER be used in production
+    without proper sandboxing (e.g., Docker, gVisor, or Firecracker).
+    """
+
+    # Timeout in seconds to prevent infinite loops
+    TIMEOUT = 5
 
     @staticmethod
     def execute_python(code: str, input_data: str = "") -> Dict[str, Any]:
-        """Execute Python code"""
+        """Execute Python code with basic security warnings"""
         try:
             with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
                 f.write(code)
@@ -54,7 +60,7 @@ class CodeExecutor:
 
     @staticmethod
     def execute_cpp(code: str, input_data: str = "") -> Dict[str, Any]:
-        """Execute C++ code"""
+        """Execute C++ code with basic security warnings"""
         try:
             # Create temp directory
             temp_dir = tempfile.mkdtemp()

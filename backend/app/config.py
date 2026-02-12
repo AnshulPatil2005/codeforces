@@ -6,6 +6,7 @@ class Settings(BaseSettings):
 
     # API Settings
     codeforces_api_base_url: str = "https://codeforces.com/api"
+    secret_key: str = "your-default-secret-key-change-me-in-production"
 
     # Cache Settings
     cache_ttl_seconds: int = 300  # 5 minutes
